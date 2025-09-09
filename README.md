@@ -1,44 +1,103 @@
-# dsc-202-fraud-analytics
-Fraud analytics for detecting potentially fraudulent merchants based on transaction patterns. 
+# ML Competitions: Models & Scoring
 
-# Team Members
-1. Tarun Kumar Gupta (A69033596)
-2. Aryan Bansal (A69034284)
-3. Jude Mariadas (A18105200)
-4. David Lurie (A69034603)
+## Competition Submission Form
 
+Once everything below is completed, every team should submit the
+[Competition Submission Form](https://forms.gle/giucmSFyYQiBjL1S6). It is
+due Wednesday, April 9th, at 11:59PM.
 
-## Instructions to run  
-0. Pull the repo. 
+## Repository Instructions
 
-1. Create and setup environment  
-```
-conda create --name dsc-202 python=3.10.16
-conda activate dsc-202
-pip install -r requirements.txt
-```  
+This is the base repository to build upon.
 
-2. Launch Neo4j and Postgres containers (Command Prompt)
-```
-docker pull neo4j 
-docker pull postgres
+1. Fork this repository, once per group
+2. Ensure your repository is set to private
+3. Add @ryanhammonds and @ustunb to the repository
+4. Add all team members to the respository
 
-docker run --name neo4j-with-plugins^ -p 7474:7474 -p 7687:7687^ -e NEO4J_AUTH=neo4j/password^ -e NEO4JLABS_PLUGINS="[\"apoc\", \"graph-data-science\"]"^ -e NEO4J_dbms_security_procedures_unrestricted="apoc.*,gds.*"^ -e NEO4J_dbms_security_procedures_allowlist="apoc.*,gds.*"^ -v "%cd%/neo4j-import:/import"^ -v neo4j_data:/data^ neo4j:latest
+Then install the repostory code in your environment:
 
-docker run --name postgres -e POSTGRES_USER=myuser -e POSTGRES_PASSWORD=mypassword -e POSTGRES_DATABASE=mydatabase -p 5432:5432 -d postgres:latest
+```bash
+git clone https://github.com/{your fork}/mlc.git
+pip install -e mlc
 ```
 
-3. Run python notebook  
-Once neo4j has been set up and is running, run the `neo4j-data-ingestion+analysis.ipynb` to ingest the `neo4j-import/fraudTestSample.csv` file into the Neo4j and for doing further analysis with Neo4j. To limit the number of rows that are ingested, add `LIMIT 10` after the `WITH ROW` line in the query. 
+## Submission Template Instructions
 
-After setting up the postgres container, run the `postgres-data-ingestion.ipynb` notebook to ingest the `postgres-import/fraudTestSample.csv` file into Postgres.
+There is `ScorableModelTemplate` class and `compute_score` function
+for each comptition, accessible from:
 
-## Data Reset Procedure for Neo4j  
-To properly reset the Neo4j environment, both the container and its associated data volume must be removed. The container shutdown alone is insufficient for a complete reset. Execute the following commands to ensure proper removal of both the container instance and all persistent data:
+- `mlc/birdclef.py`
+- `mlc/bugnist.py`
+- `mlc/cashflow.py`
+
+Extend the `ScorableModelTemplate` and include your work. The `.process_inputs` and `.predict`
+methods need to be implemented, and have specific required inputs. See the docstring of
+these methods, specific to your compeititon, to ensure correct inputs are passed.
+In BugNIST and BirdCLEF, these functions require a list of file paths to each tif or ogg file.
+Cashflow reqiures two inputs, string paths to consumer_data.parquet and transactions.parquet.
+
+The `.process_inputs` method should:
+
+1) Read in raw data
+2) Compute features (optional for the first assignment)
+
+The `.predict` method should:
+
+1) Call `.process_inputs` to read in data and compute features
+2) Pass computed features to trained, e.g. pytorch or sklearn, model
+3) Return predictions that are compatible with you competitions `compute_score` function.
+
+Each competition has a specific `compute_score` function. Check it to ensure what is
+returned from `.predict` is compatible.
+
+### __check_rep__
+
+Each `ScorableModelTemplate` class has a `__check_rep__` method that tests if your predictions
+can be scored. This method runs tests when your template sub-class is initialized.
+See the `__check_rep__` method for:
+
+- an example of how to pass the output from `.predict` to `compute_score`, specific to each competition
+- the tests that are required to pass
+
+### Submission
+
+Complete the following in either a submission.py or submission.ipynb. Commit this file and push it to
+your github fork. It is what will be used for grading.
+
+```python
+from mlc.[your competition] import ScorableModelTemplate
+
+class ScorableModel(ScorableModelTemplate):
+
+    def predict(self, raw_files: list[str]):
+        """Input argument will vary. See you competition's template.
+
+        :param raw_files: list of file path strings, depends on competition
+        :return predictions: dataframe or np.array, depends on competition
+        """
+        # Implement this: may return random predictions for the first assignment
+        raise NotImplementedError()
+
+    def process_inputs(self, raw_files: list[str]):
+        """Input argument will vary. See you competition's template.
+
+        :param raw_files: list of file path strings, depends on competition
+        :return: anything needed for you model to make predictions, e.g. features or processed data
+        """
+        # Implement this: only need to read in files for first assignment
+        raise NotImplementedError()
+
+# Intialize, runs: __check_rep__ to validate class
+model = ScorableModel() # error will be raised if the above is not implemented correctly
 ```
-docker stop neo4j-with-plugins
-docker rm neo4j-with-plugins
-docker volume rm neo4j_data
-```
-This sequence ensures complete elimination of all Neo4j-related resources, allowing for a clean reinstallation if required.
 
+## DSMLP
+
+[Slides](https://docs.google.com/presentation/d/1NAEO91toHvFN9y_7jojfs3pxln0MkH4YhGTNdSVj6xU/edit?usp=sharing)
+on DSMLP.
+
+- How to login
+- How to access datasets on DSMLP
+- How to clone you forked version of this repository to DSMLP
+- How to start notebooks with and without GPU
